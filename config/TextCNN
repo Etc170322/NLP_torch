@@ -1,17 +1,16 @@
 {
-  "Embedding_pretrained": "True",
-  "Pretrain_Embedding_path": "/data/embedding_Tencent.npz",
-  "vocab_path": "/models/TextCNN/vocab.pkl",
-  "model_path": "/models/TextCNN/textcnn.ckpt",
+  "Embedding_pretrained": "False",
+  "Pretrain_Embedding_path": "./data/embedding_Tencent.npz",
+  "vocab_path": "./models/TextCNN/vocab.pkl",
+  "save_path": "./models/TextCNN/textcnn",
   "vocabulary_size": 40000,
   "Embedding_dim": 200,
-  "filter_nums": 256,
+  "filter_nums": 128,
   "filter_sizes": [2,3,5],
-  "classes_num": 2,
-  "dropout": 0.75,
-  "class_list": [0,1,2,3,4,5],
+  "dropout": 0.6,
+  "class_list": ["finance","realty","stocks","education","science","society","politics","sports","game","entertainment"],
   "num_epochs": 20,
   "batch_size": 128,
   "pad_size": 32,
-  "require_improvement": 1000
+  "require_improvement": 10000
 }

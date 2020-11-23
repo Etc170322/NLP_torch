@@ -43,7 +43,7 @@ def build_dataset(config, use_words):
     if os.path.exists(config.get('data','vocab_path')):
         vocab = pkl.load(open(config.get('data','vocab_path'), 'rb'))
     else:
-        vocab = build_vocab(config.get('data','train_path'), use_words=use_words, max_size=int(config.get('model','MAX_VOCAB')), min_freq=1)
+        vocab = build_vocab(config.get('data','train_path'), use_words=use_words, max_size=int(config.get('model','max_vocabulary')), min_freq=1)
         pkl.dump(vocab, open(config.get('data','vocab_path'), 'wb'))
     print(f"Vocab size: {len(vocab)}")
 

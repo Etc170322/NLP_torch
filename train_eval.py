@@ -7,6 +7,7 @@ from tensorboardX import SummaryWriter
 from utils import *
 from importlib import import_module
 import configparser
+from core import TextCNN
 
 def init_network(model,method = 'xavier',exclude='embedding', seed=123):
     for name, w in model.named_parameters():
@@ -24,15 +25,15 @@ def init_network(model,method = 'xavier',exclude='embedding', seed=123):
 def train(config,model,train_iter,dev_iter,test_iter):
     start_time = time.time()
     model.train()
-    optimizer = torch.optim.Adam(model.parameters(), lr = config.learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr = float(config.get("model","learning_rate")))
 
     total_batch = 0
     dev_best_loss = float('inf')
     last_improve = 0
     flag = False
-    writer = SummaryWriter(log_dir=config.log_path + '/' + time.strftime('%m%d_%H.%M',time.localtime()))
-    for epoch in range(config.epoches):
-        print("Epoch [{}/{}]".format(epoch+1,config.epoches))
+    writer = SummaryWriter(log_dir=config.get("data","log_path")+ '/' + time.strftime('%m%d_%H.%M',time.localtime()))
+    for epoch in range(int(config.get("model","epoches"))):
+        print("Epoch [{}/{}]".format(epoch+1,int(config.get("model","epoches"))))
         for i,(trains,labels) in enumerate(train_iter):
             outputs = model(trains)
             model.zero_grad()
@@ -43,10 +44,10 @@ def train(config,model,train_iter,dev_iter,test_iter):
                 true = labels.data.cpu()
                 predic = torch.max(outputs.data, 1)[1].cpu()
                 train_acc = metrics.accuracy_score(true,predic)
-                dev_acc, dev_loss = evaluate(config, model, dev_iter)
+                dev_acc, dev_loss = evaluate(model, dev_iter)
                 if dev_loss < dev_best_loss:
                     dev_best_loss = dev_loss
-                    torch.save(model.state_dict(), config.save_path)
+                    torch.save(model.state_dict(), model.save_path)
                     improve = '*'
                     last_improve = total_batch
                 else:
@@ -60,7 +61,7 @@ def train(config,model,train_iter,dev_iter,test_iter):
                 writer.add_scalar("acc/dev", dev_acc, total_batch)
                 model.train()
             total_batch += 1
-            if total_batch - last_improve > config.require_improvement:
+            if total_batch - last_improve > model.require_improvement:
                 # 验证集loss超过1000batch没下降，结束训练
                 print("No optimization for a long time, auto-stopping...")
                 flag = True
@@ -68,14 +69,14 @@ def train(config,model,train_iter,dev_iter,test_iter):
         if flag:
             break
         writer.close()
-        test(config, model, test_iter)
+        test(model, test_iter)
 
-def test(config, model, test_iter):
+def test(model, test_iter):
     # test
-    model.load_state_dict(torch.load(config.save_path))
+    model.load_state_dict(torch.load(model.save_path))
     model.eval()
     start_time = time.time()
-    test_acc, test_loss, test_report, test_confusion = evaluate(config, model, test_iter, test=True)
+    test_acc, test_loss, test_report, test_confusion = evaluate(model, test_iter, test=True)
     msg = 'Test Loss: {0:>5.2},  Test Acc: {1:>6.2%}'
     print(msg.format(test_loss, test_acc))
     print("Precision, Recall and F1-Score...")
@@ -85,7 +86,7 @@ def test(config, model, test_iter):
     time_dif = get_time_dif(start_time)
     print("Time usage:", time_dif)
 
-def evaluate(config, model, data_iter, test=False):
+def evaluate(model, data_iter, test=False):
     model.eval()
     loss_total = 0
     predict_all = np.array([], dtype=int)
@@ -102,7 +103,7 @@ def evaluate(config, model, data_iter, test=False):
 
     acc = metrics.accuracy_score(labels_all, predict_all)
     if test:
-        report = metrics.classification_report(labels_all, predict_all, target_names=config.class_list, digits=4)
+        report = metrics.classification_report(labels_all, predict_all, target_names=model.class_list, digits=4)
         confusion = metrics.confusion_matrix(labels_all, predict_all)
         return acc, loss_total / len(data_iter), report, confusion
     return acc, loss_total / len(data_iter)
@@ -128,8 +129,7 @@ if __name__ == '__main__':
     print("Time usage:", time_dif)
 
     # train
-    config.n_vocab = len(vocab)
-    model = x.Model(config).to(config.device)
+    model = TextCNN.Model("config/TextCNN")
     if model_name != 'Transformer':
         init_network(model)
     print(model.parameters)
