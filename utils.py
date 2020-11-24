@@ -40,11 +40,11 @@ def get_time_dif(start_time):
     return timedelta(seconds=int(round(time_dif)))
 
 def build_dataset(config, use_words):
-    if os.path.exists(config.get('data','vocab_path')):
-        vocab = pkl.load(open(config.get('data','vocab_path'), 'rb'))
+    if os.path.exists(config.get('Embedding','vocab_path')):
+        vocab = pkl.load(open(config.get('Embedding','vocab_path'), 'rb'))
     else:
-        vocab = build_vocab(config.get('data','train_path'), use_words=use_words, max_size=int(config.get('model','max_vocabulary')), min_freq=1)
-        pkl.dump(vocab, open(config.get('data','vocab_path'), 'wb'))
+        vocab = build_vocab(config.get('Data','train_path'), use_words=use_words, max_size=int(config.get('Embedding','vocabulary_size')), min_freq=1)
+        pkl.dump(vocab, open(config.get('Embedding','vocab_path'), 'wb'))
     print(f"Vocab size: {len(vocab)}")
 
     def load_dataset(path, pad_size=32):
@@ -73,9 +73,9 @@ def build_dataset(config, use_words):
                     words_line.append(vocab.get(word, vocab.get('UNK')))
                 contents.append((words_line, int(label), seq_len))
         return contents  # [([...], 0), ([...], 1), ...]
-    train = load_dataset(config.get('data','train_path'), int(config.get('model','max_length')))
-    dev = load_dataset(config.get('data','dev_path'), int(config.get('model','max_length')))
-    test = load_dataset(config.get('data','test_path'), int(config.get('model','max_length')))
+    train = load_dataset(config.get('Data','train_path'), config.getint('Data','max_length'))
+    dev = load_dataset(config.get('Data','dev_path'), config.getint('Data','max_length'))
+    test = load_dataset(config.get('Data','test_path'), config.getint('Data','max_length'))
     return vocab, train, dev, test
 
 class DatasetIterater(object):
@@ -123,5 +123,5 @@ class DatasetIterater(object):
             return self.n_batches
 
 def build_iterator(dataset, config):
-    iter = DatasetIterater(dataset, int(config.get('model','batch_size')), config.get('model','device'))
+    iter = DatasetIterater(dataset, int(config.get('Data','batch_size')), config.get('Data','device'))
     return iter

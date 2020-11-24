@@ -1,13 +1,11 @@
 import numpy as np
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from sklearn import metrics
 from tensorboardX import SummaryWriter
 from utils import *
-from importlib import import_module
 import configparser
-from core import TextCNN
+from core import TextCNN,TextRNN
 
 def init_network(model,method = 'xavier',exclude='embedding', seed=123):
     for name, w in model.named_parameters():
@@ -22,18 +20,18 @@ def init_network(model,method = 'xavier',exclude='embedding', seed=123):
             elif 'bias' in name:
                 nn.init.constant_(w,0)
 
-def train(config,model,train_iter,dev_iter,test_iter):
+def train(model,train_iter,dev_iter,test_iter):
     start_time = time.time()
     model.train()
-    optimizer = torch.optim.Adam(model.parameters(), lr = float(config.get("model","learning_rate")))
+    optimizer = torch.optim.Adam(model.parameters(), lr = float(model.learning_rate))
 
     total_batch = 0
     dev_best_loss = float('inf')
     last_improve = 0
     flag = False
-    writer = SummaryWriter(log_dir=config.get("data","log_path")+ '/' + time.strftime('%m%d_%H.%M',time.localtime()))
-    for epoch in range(int(config.get("model","epoches"))):
-        print("Epoch [{}/{}]".format(epoch+1,int(config.get("model","epoches"))))
+    writer = SummaryWriter(log_dir=model.log_path+ '/' + time.strftime('%m%d_%H.%M',time.localtime()))
+    for epoch in range(model.epoches):
+        print("Epoch [{}/{}]".format(epoch+1,model.epoches))
         for i,(trains,labels) in enumerate(train_iter):
             outputs = model(trains)
             model.zero_grad()
@@ -111,7 +109,7 @@ def evaluate(model, data_iter, test=False):
 if __name__ == '__main__':
     dataset = 'THUCNews'
     embedding = 'embedding_SougouNews.npz'
-    model_name = 'TextCNN'
+    model_name = 'TextRNN'
     from utils import build_dataset,build_iterator,get_time_dif
 
     config = configparser.ConfigParser()
@@ -129,8 +127,8 @@ if __name__ == '__main__':
     print("Time usage:", time_dif)
 
     # train
-    model = TextCNN.Model("config/TextCNN")
+    model = TextRNN.Model(config)
     if model_name != 'Transformer':
         init_network(model)
     print(model.parameters)
-    train(config, model, train_iter, dev_iter, test_iter)
+    train(model, train_iter, dev_iter, test_iter)
