@@ -31,6 +31,7 @@ def train(model,train_iter,dev_iter,test_iter):
     flag = False
     writer = SummaryWriter(log_dir=model.log_path+ '/' + time.strftime('%m%d_%H.%M',time.localtime()))
     for epoch in range(model.epoches):
+        model.train()
         print("Epoch [{}/{}]".format(epoch+1,model.epoches))
         for i,(trains,labels) in enumerate(train_iter):
             outputs = model(trains)
