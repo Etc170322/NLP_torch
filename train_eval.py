@@ -5,7 +5,7 @@ from sklearn import metrics
 from tensorboardX import SummaryWriter
 from utils import *
 import configparser
-from core import TextCNN,TextRNN
+from core import TextRNN,TextCNN,TextRNN_Att
 
 def init_network(model,method = 'xavier',exclude='embedding', seed=123):
     for name, w in model.named_parameters():
@@ -110,7 +110,7 @@ def evaluate(model, data_iter, test=False):
 if __name__ == '__main__':
     dataset = 'THUCNews'
     embedding = 'embedding_SougouNews.npz'
-    model_name = 'TextRNN'
+    model_name = 'TextRNN_Att'
     from utils import build_dataset,build_iterator,get_time_dif
 
     config = configparser.ConfigParser()
@@ -128,7 +128,8 @@ if __name__ == '__main__':
     print("Time usage:", time_dif)
 
     # train
-    model = TextRNN.Model(config)
+    command = ".Model(config)"
+    model = eval(model_name + command)
     if model_name != 'Transformer':
         init_network(model)
     print(model.parameters)
