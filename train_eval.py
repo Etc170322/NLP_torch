@@ -1,11 +1,13 @@
 import numpy as np
 import torch.nn as nn
+import torch
 import torch.nn.functional as F
 from sklearn import metrics
 from tensorboardX import SummaryWriter
-from utils import *
 import configparser
-from core import TextRNN,TextCNN,TextRNN_Att
+import time
+import os
+
 
 def init_network(model,method = 'xavier',exclude='embedding', seed=123):
     for name, w in model.named_parameters():
@@ -110,11 +112,14 @@ def evaluate(model, data_iter, test=False):
 if __name__ == '__main__':
     dataset = 'THUCNews'
     embedding = 'embedding_SougouNews.npz'
-    model_name = 'TextRNN_Att'
-    from utils import build_dataset,build_iterator,get_time_dif
+    model_class = 'Translate'
+    model_name = 'biLSTM_Att'
+    exec('from {} import {}'.format(model_class,model_name))
+    exec('from {}.utils import build_dataset,build_iterator,get_time_dif'.format(model_class))
 
     config = configparser.ConfigParser()
-    config.read("./config/base.ini", encoding='utf-8')
+    config_path = os.path.join("./config",model_class,model_name+".ini")
+    config.read(config_path, encoding='utf-8')
     np.random.seed(1)
     torch.manual_seed(1)
 
@@ -128,8 +133,7 @@ if __name__ == '__main__':
     print("Time usage:", time_dif)
 
     # train
-    command = ".Model(config)"
-    model = eval(model_name + command)
+    model = eval('{}.Model(config)'.format(model_name))
     if model_name != 'Transformer':
         init_network(model)
     print(model.parameters)
